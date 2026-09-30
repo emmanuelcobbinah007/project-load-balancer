@@ -1,0 +1,79 @@
+{
+  "info": {
+    "name": "Project Load Balancer",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "serverId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Proxy: GET / (goes to a backend)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/"
+      }
+    },
+    {
+      "name": "Proxy: slow job (3s)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/slow?ms=3000"
+      }
+    },
+    {
+      "name": "Stats (status + active jobs)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/service/stats"
+      }
+    },
+    {
+      "name": "Add server",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+              "if (pm.response.code === 201) {",
+              "  const id = pm.response.json().server.id;",
+              "  pm.collectionVariables.set(\"serverId\", id);",
+              "  console.log(\"Saved serverId:\", id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serverName\": \"api-1\",\n  \"ipAddress\": \"127.0.0.1:5001\"\n}"
+        },
+        "url": "{{baseUrl}}/service/add-server"
+      }
+    },
+    {
+      "name": "Remove server",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/service/remove-server/{{serverId}}"
+      }
+    }
+  ]
+}
