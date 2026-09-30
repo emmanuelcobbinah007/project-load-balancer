@@ -6,6 +6,7 @@ import { createServerRouter } from "./routes/serverRoutes.js";
 import { startHealthChecks } from "./healthChecker.js";
 import { HealthLog } from "./healthLog.js";
 import { LeastConnectionsBalancer } from "./balancer/leastConnections.js";
+import { PassiveHealthTracker } from "./balancer/passiveHealth.js";
 import { createProxyHandler } from "./proxy.js";
 
 const app = express();
@@ -24,16 +25,18 @@ try {
 }
 
 const registry = new ServerRegistry(store);
+const healthLog = new HealthLog();
 const balancer = new LeastConnectionsBalancer();
+const passiveHealth = new PassiveHealthTracker(registry, healthLog);
 const serverController = new ServerController(registry, balancer);
 
 // Load balancer management API
 app.use("/service", createServerRouter(serverController));
 
 // Everything else is forwarded to a backend
-app.use(createProxyHandler(registry, balancer));
+app.use(createProxyHandler(registry, balancer, passiveHealth));
 
 app.listen(PORT, () => {
   console.log(`[server]: Server is running at http://localhost:${PORT}`);
-  startHealthChecks(registry, new HealthLog());
+  startHealthChecks(registry, healthLog);
 });

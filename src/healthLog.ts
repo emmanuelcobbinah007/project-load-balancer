@@ -10,6 +10,9 @@ export interface HealthLogEntry {
   status: ServerStatus;
   responseTime: number;
   error?: string;
+  // "active" = the health checker's /health probe,
+  // "passive" = real traffic failing through the proxy
+  source: "active" | "passive";
 }
 
 // Append-only JSON Lines log, one file per day (UTC):

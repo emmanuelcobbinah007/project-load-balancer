@@ -79,6 +79,7 @@ Anything not under `/service` is forwarded to a backend:
 | ------------------- | ----------------------------------------------------- |
 | `GET /`             | A hello from whichever backend was chosen             |
 | `GET /slow?ms=3000` | A slow job, handy for watching least connections work |
+| `GET /broken`       | A backend that dies halfway through its response      |
 
 The load balancer's own API lives under `/service`:
 
@@ -100,6 +101,7 @@ src/
   proxy.ts                  forwards requests and streams responses back
   balancer/
     leastConnections.ts     picks the server and tracks job counts
+    passiveHealth.ts        takes servers out after repeated failed requests
   healthChecker.ts          checks every backend every 5s
   healthLog.ts              writes the daily health log files
   serverRegistry.ts         add, remove and update servers
@@ -107,7 +109,7 @@ src/
   controllers/              handlers for /service
   routes/                   routes for /service
 backends/
-  backend.ts                a tiny test backend with /health and /slow
+  backend.ts                a tiny test backend with /health, /slow and /broken
 ```
 
 ## The "database"
@@ -116,8 +118,8 @@ It's a JSON file at `data/data.json`. In production this would be something like
 
 ## What's next
 
-- [ ] **Passive health checks.** Stop sending traffic to a dead server after a few failed requests, instead of waiting up to 5 seconds for the next health check.
-- [ ] **Retries.** If a safe request (GET, HEAD, OPTIONS) fails to reach one server, try another before giving the client an error.
+- [x] **Passive health checks.** Stop sending traffic to a dead server after a few failed requests, instead of waiting up to 5 seconds for the next health check.
+- [x] **Retries.** If a safe request (GET, HEAD, OPTIONS) fails to reach one server, try another before giving the client an error.
 - [ ] **Weighted distribution.** Bigger servers get more traffic, using weighted least connections with smooth weighted round-robin to break ties.
 - [ ] **Keep the server list in memory** instead of reading the JSON file on every request.
 

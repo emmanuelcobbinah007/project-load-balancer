@@ -27,6 +27,14 @@ app.get("/slow", (req: Request, res: Response) => {
   }, ms);
 });
 
+// Simulates a crash halfway through a response: sends the headers and part of
+// the body, then drops the connection
+app.get("/broken", (req: Request, res: Response) => {
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.write(`${NAME} started a response... `);
+  setTimeout(() => res.socket?.destroy(), 100);
+});
+
 app.listen(PORT, () => {
   console.log(`[${NAME}]: listening on http://localhost:${PORT}`);
 });

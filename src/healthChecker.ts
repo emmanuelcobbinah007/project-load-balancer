@@ -1,5 +1,5 @@
 import { ServerStatus, type BackendServer } from "./db.js";
-import type { HealthLog } from "./healthLog.js";
+import type { HealthLog, HealthLogEntry } from "./healthLog.js";
 import type { ServerRegistry } from "./serverRegistry.js";
 
 interface HealthCheckOptions {
@@ -70,7 +70,7 @@ export function startHealthChecks(
     );
 
     const ts = new Date().toISOString();
-    const logEntries = [];
+    const logEntries: HealthLogEntry[] = [];
 
     for (const { server, status, responseTime, error } of results) {
       // Skips servers that were removed while the checks were in flight
@@ -84,6 +84,7 @@ export function startHealthChecks(
         status,
         responseTime,
         ...(error && { error }),
+        source: "active",
       });
 
       if (server.status !== status) {
